@@ -11,8 +11,11 @@ To run this project, you must have installed version 3.10 of Python. It is also 
 ```cd rag-on-documents```
 
 * Thirdly, install required libraries via requirement.txt
+
 ```conda create -n rag_on_doc_env python=3.10 -y```
+
 ```conda activate rag_on_doc_env```
+
 ```pip install -r requirements.txt```
 
 * Finally, run the project by 
