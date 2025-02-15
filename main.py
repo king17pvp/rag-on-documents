@@ -1,3 +1,4 @@
+import PyPDF2
 import torch
 import requests
 import chainlit as cl
@@ -9,20 +10,21 @@ from sentence_transformers import SentenceTransformer
 
 from langchain.memory import ConversationBufferMemory
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_huggingface.llms import HuggingFacePipeline
-from langchain_huggingface import HuggingFaceEndpoint
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain.chains import ConversationalRetrievalChain
-
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda, RunnableMap
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain import hub
 
 from utils import *
-
+PERSIST_DIRECTORY = "vectorstore/" 
+WELCOME_MESSAGE = f"""Welcome to the PDF Q&A Program, to get started, please do the following:
+1. Upload a PDF or Text file
+2. Ask a question about the file
+"""
 warnings.filterwarnings("ignore", category=FutureWarning)
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
@@ -68,7 +70,7 @@ async def on_chat_start():
     files = None
     while files is None:
         files = await cl.AskFileMessage(
-            content="",
+            content=WELCOME_MESSAGE,
             accept=["text/plain", "application/pdf"],
             max_size_mb=10,
             timeout=180
@@ -78,7 +80,23 @@ async def on_chat_start():
         content=f"Processing {file.name}...",
     )
     await message.send()
-    vector_db = await cl.make_async(get_vector_db)(file)
+    pdf = PyPDF2.PdfReader(file.path)
+    pdf_text = ""
+    for page in pdf.pages:
+        pdf_text += page.extract_text()
+        
+
+    # Split the text into chunks
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    texts = text_splitter.split_text(pdf_text)
+
+    # Create a metadata for each chunk
+    metadatas = [{"source": f"{i}-pl"} for i in range(len(texts))]
+
+    # Create a Chroma vector store
+    vector_db = await cl.make_async(Chroma.from_texts)(
+        texts, embedding, metadatas=metadatas, persist_directory=PERSIST_DIRECTORY
+    )
     message_history = ChatMessageHistory()
     memory = ConversationBufferMemory(
         memory_key="chat_history",
@@ -101,15 +119,17 @@ async def on_chat_start():
     )
     
     message.content = f"File {file.name} processed successfully, now you can ask question about the PDF file"
+
     await message.update()
     cl.user_session.set("chain", chain)
 
 @cl.on_message
 async def on_message(message: cl.Message):
+    print(message.content)
     chain = cl.user_session.get("chain")
     cb = cl.AsyncLangchainCallbackHandler()
-    res = await chain.invoke(message.content, callbacks=[cb])
     
+    res = await chain.ainvoke(message.content, callbacks=[cb])
     answer = res["answer"]
     source_documents = res["source_documents"]
     text_elements = []
