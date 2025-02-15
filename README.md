@@ -1,10 +1,14 @@
 # rag-on-documents
 
 Question Answering system on PDF, Text files using RAGs.
+<p align="center">
+  <img src="assets/demo.png" alt = "UI" title = "Overview of the application" width="1030" height="540">
+</p>
 
 ## Requirement
 To run this project, you must have installed version 3.10 of Python. It is also highly recommended that you create an environment via conda environment
 * Firstly, clone the repository's main branch into your desired directory using your git command prompt.
+
 ```git clone https://github.com/king17pvp/rag-on-documents.git```
 
 * Secondly, you can access the directory by this command.
@@ -20,7 +24,7 @@ To run this project, you must have installed version 3.10 of Python. It is also 
 
 * Then, export your Hugging Face API Key so we can use Inference Service by HuggingFace 
 
-REMINDER: Inference API provided by HF are limited
+REMINDER: Inference APIs provided by HF are limited per account
 
 ```export API_KEY=<YOUR_HF_API_KEY>```
 
