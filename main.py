@@ -1,4 +1,3 @@
-import PyPDF2
 import torch
 import requests
 import chainlit as cl
@@ -28,7 +27,7 @@ WELCOME_MESSAGE = f"""Welcome to the PDF Q&A Program, to get started, please do 
 warnings.filterwarnings("ignore", category=FutureWarning)
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
-    chunk_overlap=100
+    chunk_overlap=200
 )
 LLM = LlamaLLM()
 embedding = get_embeddings(
@@ -54,7 +53,8 @@ def get_vector_db(file: AskFileResponse):
     cl.user_session.set("docs", docs)
     vector_db = Chroma.from_documents(
         documents=docs,
-        embedding=embedding
+        embedding=embedding,
+        persist_directory=PERSIST_DIRECTORY
     )
     return vector_db
 
@@ -80,23 +80,8 @@ async def on_chat_start():
         content=f"Processing {file.name}...",
     )
     await message.send()
-    pdf = PyPDF2.PdfReader(file.path)
-    pdf_text = ""
-    for page in pdf.pages:
-        pdf_text += page.extract_text()
-        
 
-    # Split the text into chunks
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    texts = text_splitter.split_text(pdf_text)
-
-    # Create a metadata for each chunk
-    metadatas = [{"source": f"{i}-pl"} for i in range(len(texts))]
-
-    # Create a Chroma vector store
-    vector_db = await cl.make_async(Chroma.from_texts)(
-        texts, embedding, metadatas=metadatas, persist_directory=PERSIST_DIRECTORY
-    )
+    vector_db = await cl.make_async(get_vector_db)(file)
     message_history = ChatMessageHistory()
     memory = ConversationBufferMemory(
         memory_key="chat_history",
@@ -107,7 +92,7 @@ async def on_chat_start():
     retriever = vector_db.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 4
+            "k": 5
         }
     )
     chain = ConversationalRetrievalChain.from_llm(
