@@ -1,0 +1,14 @@
+chainlit==2.2.1
+transformers==4.41.2
+bitsandbytes==0.43.1
+accelerate==0.31.0
+langchain==0.2.5
+langchainhub==0.1.20
+langchain-chroma==0.1.1
+langchain-community==0.2.5
+langchain_huggingface==0.0.3
+python-dotenv==1.0.1
+pypdf==4.2.0
+numpy==1.24.4
+sentence_transformers==3.4.1
+pyvi
