@@ -28,34 +28,37 @@ text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
     chunk_overlap=100
 )
-
-loader = Loader("./pdfs/1706.03762v7.pdf")
-documents = loader.load()
-docs = text_splitter.split_documents(documents)
+LLM = LlamaLLM()
 embedding = get_embeddings(
     "intfloat/multilingual-e5-base",
     {'device': 'cpu'},
     {'normalize_embeddings': False}
 )
-vector_db = Chroma.from_documents(
-    documents=docs,
-    embedding=embedding
-)
-retriever = vector_db.as_retriever()
+def process_input(file: AskFileResponse):
+    if file.type == "text/plain":
+        Loader = TextLoader
+    elif file.type == "application/pdf":
+        Loader = PyPDFLoader
+    
+    loader = Loader(file.path)
+    documents = loader.load()
+    docs = text_splitter.split_documents(documents)
+    for i, doc in enumerate(docs):
+        doc.metadata["source"] = f"source {i}"
+    return docs
+    
+def get_vector_db(file: AskFileResponse):
+    docs = process_input(file)
+    cl.user_session.set("docs", docs)
+    vector_db = Chroma.from_documents(
+        documents=docs,
+        embedding=embedding
+    )
+    return vector_db
 
-LLM = LlamaLLM()
 prompt = RunnableLambda(
     lambda inputs: get_prompt(
         question=inputs["question"], 
         context=inputs["context"]
     )
 )
-rag_chain = (
-    {"context": retriever | format_docs, "question": RunnablePassthrough()} | prompt | LLM | StrOutputParser()
-)
-
-USER_QUESTION = "WHAT IS TRANSFORMER"
-output = rag_chain.invoke(USER_QUESTION)
-answer = output.strip()
-
-print(answer)
