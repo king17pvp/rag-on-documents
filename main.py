@@ -62,3 +62,70 @@ prompt = RunnableLambda(
         context=inputs["context"]
     )
 )
+
+@cl.on_chat_start
+async def on_chat_start():
+    files = None
+    while files is None:
+        files = await cl.AskFileMessage(
+            content="",
+            accept=["text/plain", "application/pdf"],
+            max_size_mb=10,
+            timeout=180
+        ).send()
+    file = files[0]
+    message = cl.Message(
+        content=f"Processing {file.name}...",
+    )
+    await message.send()
+    vector_db = await cl.make_async(get_vector_db)(file)
+    message_history = ChatMessageHistory()
+    memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        output_key="answer",
+        chat_history=message_history,
+        return_messages=True
+    )
+    retriever = vector_db.as_retriever(
+        search_type="mmr",
+        search_kwargs={
+            "k": 4
+        }
+    )
+    chain = ConversationalRetrievalChain.from_llm(
+        llm=LLM,
+        chain_type="stuff",
+        retriever=retriever,
+        memory=memory,
+        return_source_documents=True       
+    )
+    
+    message.content = f"File {file.name} processed successfully, now you can ask question about the PDF file"
+    await message.update()
+    cl.user_session.set("chain", chain)
+
+@cl.on_message
+async def on_message(message: cl.Message):
+    chain = cl.user_session.get("chain")
+    cb = cl.AsyncLangchainCallbackHandler()
+    res = await chain.invoke(message.content, callbacks=[cb])
+    
+    answer = res["answer"]
+    source_documents = res["source_documents"]
+    text_elements = []
+    
+    if source_documents:
+        for source_idx, source_doc in enumerate(source_documents):
+            source_name = f"Source {source_idx}"
+            text_elements.append(
+                cl.Text(
+                    content=source_doc.page_content,
+                    name=source_name
+                )
+            )
+        source_names = [text_el.name for text_el in text_elements]
+        if source_names:
+            answer += f"\nSources: {', '.join(source_names)}"
+        else:
+            answer += "\nNo sources found"
+    await cl.Message(content=answer, elements=text_elements).send()
