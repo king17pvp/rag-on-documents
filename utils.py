@@ -10,7 +10,7 @@ from langchain.callbacks.manager import CallbackManagerForLLMRun
 from langchain.llms.base import LLM
 from chainlit.types import AskFileResponse
 class LlamaLLM(LLM):
-    API_KEY = ""
+    API_KEY = os.environ['API_KEY'] 
     client = InferenceClient(
         provider="together",
         api_key=API_KEY
