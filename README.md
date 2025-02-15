@@ -2,7 +2,7 @@
 
 Question Answering system on PDF, Text files using RAGs.
 <p align="center">
-  <img src="assets/demo.png" alt = "UI" title = "Overview of the application" width="1030" height="520">
+  <img src="assets/demo.png" alt = "UI" title = "Overview of the application" width="1030" height="480">
 </p>
 
 ## Requirement
@@ -11,7 +11,7 @@ To run this project, you must have installed version 3.10 of Python. It is also 
 
 ```git clone https://github.com/king17pvp/rag-on-documents.git```
 
-* Secondly, you can access the directory by this command.
+* Secondly, you can access the directory using this command.
 ```cd rag-on-documents```
 
 * Thirdly, install required libraries via requirement.txt
