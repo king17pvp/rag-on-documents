@@ -2,7 +2,7 @@
 
 Question Answering system on PDF, Text files using RAGs.
 <p align="center">
-  <img src="assets/demo.png" alt = "UI" title = "Overview of the application" width="1030" height="520">
+  <img src="assets/demo.png" alt = "UI" title = "Overview of the application" width="1030" height="510">
 </p>
 
 ## Requirement
