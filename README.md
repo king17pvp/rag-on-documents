@@ -18,8 +18,16 @@ To run this project, you must have installed version 3.10 of Python. It is also 
 
 ```pip install -r requirements.txt```
 
+* Then, export your Hugging Face API Key so we can use Inference Service by HuggingFace 
+
+REMINDER: Inference API provided by HF are limited
+
+```export API_KEY=<YOUR_HF_API_KEY>```
+
 * Finally, run the project by 
 
 ```chainlit run main.py --host 0.0.0.0 --port 8000```
 
 You can access the demo web through: ```localhost:8000```
+
+
