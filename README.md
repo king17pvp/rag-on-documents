@@ -1,9 +1,10 @@
 # rag-on-documents
 
 Question Answering system on PDF, Text files using RAGs.
-<p align="center">
-  <img src="assets/demo.png" alt = "UI" title = "Overview of the application" width="1030" height="480">
-</p>
+
+https://github.com/user-attachments/assets/23d90d19-4888-488c-b026-103cd3d36593
+
+
 
 ## Requirement
 To run this project, you must have installed version 3.10 of Python. It is also highly recommended that you create an environment via conda environment
